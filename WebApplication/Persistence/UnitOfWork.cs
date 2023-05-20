@@ -1,4 +1,5 @@
-﻿using WebApplication.Abstraction;
+﻿using System.Reflection;
+using WebApplication.Abstraction;
 using WebApplication.Domain;
 
 namespace WebApplication.Persistence;
@@ -23,9 +24,18 @@ public class UnitOfWork : IUnitOfWork
             var type = typeof(IRepository<TEntity, TKey>);
             if (!_dictionary.TryGetValue(type, out var repo))
             {
-                repo = AppDomain.CurrentDomain.GetAssemblies()
+                var implementationType = AppDomain.CurrentDomain.GetAssemblies()
                     .Select(t => t.GetType())
                     .Single(t => type.IsAssignableFrom(t));
+
+                var factory = ActivatorUtilities.CreateFactory(implementationType, new[] { typeof(AppContext) });
+                repo = factory.DynamicInvoke(_appContext);
+                if (repo is null)
+                {
+                    throw new InvalidOperationException(
+                        $"Cannot create repository from type {implementationType.FullName}");
+                }
+
                 _dictionary.Add(type, repo);
             }
 

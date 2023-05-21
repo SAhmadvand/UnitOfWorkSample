@@ -1,13 +1,10 @@
-﻿using WebApplication.Domain;
-
-namespace WebApplication.Abstraction;
+﻿namespace WebApplicationSample.Abstraction;
 
 public interface IUnitOfWork
 {
-    IRepository<TEntity, TKey> GetRepositoryOf<TEntity, TKey>()
-        where TEntity : Entity<TKey>
-        where TKey : struct, IEquatable<TKey>;
-    
+    TRepository GetRepositoryOf<TRepository>()
+        where TRepository : IRepositoryMarker;
+
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

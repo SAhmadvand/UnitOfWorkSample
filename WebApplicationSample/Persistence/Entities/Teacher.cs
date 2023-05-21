@@ -1,10 +1,10 @@
-﻿using WebApplication.Domain;
+﻿using WebApplicationSample.Domain;
 
-namespace WebApplication.Persistence.Entities;
+namespace WebApplicationSample.Persistence.Entities;
 
-public class Student : Entity<int>
+public class Teacher : Entity<int>
 {
-    public Student(string firstName, string lastName, DateTime birthDate)
+    public Teacher(string firstName, string lastName, DateTime birthDate)
     {
         FirstName = firstName;
         LastName = lastName;
@@ -12,7 +12,7 @@ public class Student : Entity<int>
         Courses = new List<Course>();
     }
 
-    public Student(int id, string firstName, string lastName, DateTime birthDate) : base(id)
+    public Teacher(int id, string firstName, string lastName, DateTime birthDate) : base(id)
     {
         FirstName = firstName;
         LastName = lastName;

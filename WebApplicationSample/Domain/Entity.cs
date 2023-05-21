@@ -1,4 +1,4 @@
-﻿namespace WebApplication.Domain;
+﻿namespace WebApplicationSample.Domain;
 
 public abstract class Entity<TKey> where TKey : struct, IEquatable<TKey>
 {

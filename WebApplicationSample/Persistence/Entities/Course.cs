@@ -1,6 +1,6 @@
-﻿using WebApplication.Domain;
+﻿using WebApplicationSample.Domain;
 
-namespace WebApplication.Persistence.Entities;
+namespace WebApplicationSample.Persistence.Entities;
 
 public class Course : Entity<int>
 {

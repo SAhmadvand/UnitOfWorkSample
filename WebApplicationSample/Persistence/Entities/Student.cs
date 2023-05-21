@@ -1,18 +1,20 @@
-﻿using WebApplication.Domain;
+﻿using System.Text.Json.Serialization;
+using WebApplicationSample.Domain;
 
-namespace WebApplication.Persistence.Entities;
+namespace WebApplicationSample.Persistence.Entities;
 
-public class Teacher : Entity<int>
+public class Student : Entity<int>
 {
-    public Teacher(string firstName, string lastName, DateTime birthDate)
+    [JsonConstructor]
+    public Student(string firstName, string lastName, DateTime birthDate)
     {
         FirstName = firstName;
         LastName = lastName;
         BirthDate = birthDate;
         Courses = new List<Course>();
     }
-
-    public Teacher(int id, string firstName, string lastName, DateTime birthDate) : base(id)
+    
+    public Student(int id, string firstName, string lastName, DateTime birthDate) : base(id)
     {
         FirstName = firstName;
         LastName = lastName;

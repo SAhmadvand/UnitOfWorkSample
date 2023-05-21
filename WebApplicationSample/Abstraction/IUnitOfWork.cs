@@ -11,5 +11,5 @@ public interface IUnitOfWork
     Task SaveChangesAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);
     Task RollbackTransactionAsync(CancellationToken cancellationToken = default);
-    Task TransactionAsync(TransactionDelegate action, CancellationToken cancellationToken = default);
+    Task CommitTransactionAsync(TransactionDelegate action, CancellationToken cancellationToken = default);
 }

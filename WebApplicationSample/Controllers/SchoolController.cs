@@ -41,7 +41,7 @@ public class SchoolController : ControllerBase
     {
         try
         {
-            await _unitOfWork.TransactionAsync(async (token) =>
+            await _unitOfWork.CommitTransactionAsync(async (token) =>
             {
                 await _studentRepository.InsertAsync(student, token);
             }, cancellationToken);

@@ -15,5 +15,7 @@ public class AppDbContext : DbContext
         base.OnModelCreating(modelBuilder);
 
         modelBuilder.ApplyConfiguration(new StudentEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new CourseEntityConfiguration());
+        modelBuilder.ApplyConfiguration(new TeacherEntityConfiguration());
     }
 }

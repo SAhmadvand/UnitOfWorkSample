@@ -8,8 +8,7 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _appDbContext;
     private readonly IServiceProvider _provider;
-    [ConcurrencyCheck] private readonly ConcurrentDictionary<Type, object> _dictionary;
-    private readonly object _lock = new object();
+    private readonly ConcurrentDictionary<Type, object> _dictionary;
 
     public UnitOfWork(AppDbContext appDbContext, IServiceProvider provider)
     {
@@ -23,14 +22,15 @@ public class UnitOfWork : IUnitOfWork
         where TRepository : IRepositoryMarker
     {
         var type = typeof(TRepository);
-        if (_dictionary.GetOrAdd(type, (k) =>
-            {
-                var types = GetType().Assembly.GetTypes();
-                var implementationType = types.Single(t => t.IsClass && t.IsAssignableTo(type));
-                return ActivatorUtilities.CreateInstance(_provider, implementationType, _appDbContext);
-            }) is TRepository repository) return repository;
-
-        throw new Exception();
+        var repository = _dictionary.GetOrAdd(type, (k) =>
+        {
+            var implementationType = AppDomain.CurrentDomain
+                .GetAssemblies()
+                .SelectMany(t => t.GetTypes())
+                .Single(t => t.IsClass && t.IsAssignableTo(type));
+            return ActivatorUtilities.CreateInstance(_provider, implementationType, _appDbContext);
+        });
+        return (TRepository)repository;
     }
 
     public Task BeginTransactionAsync(CancellationToken cancellationToken = default)
@@ -48,12 +48,7 @@ public class UnitOfWork : IUnitOfWork
         return _appDbContext.Database.CommitTransactionAsync(cancellationToken);
     }
 
-    public Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
-    {
-        return _appDbContext.Database.RollbackTransactionAsync(cancellationToken);
-    }
-
-    public async Task TransactionAsync(TransactionDelegate action, CancellationToken cancellationToken = default)
+    public async Task CommitTransactionAsync(TransactionDelegate action, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -67,5 +62,10 @@ public class UnitOfWork : IUnitOfWork
             await RollbackTransactionAsync(cancellationToken);
             throw;
         }
+    }
+
+    public Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
+    {
+        return _appDbContext.Database.RollbackTransactionAsync(cancellationToken);
     }
 }

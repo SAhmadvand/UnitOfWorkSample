@@ -4,17 +4,14 @@ using WebApplicationSample.Persistence.Entities;
 
 namespace WebApplicationSample.Persistence.Configurations;
 
-public class StudentEntityConfiguration:IEntityTypeConfiguration<Student>
+public class TeacherEntityConfiguration:IEntityTypeConfiguration<Teacher>
 {
-    public void Configure(EntityTypeBuilder<Student> builder)
+    public void Configure(EntityTypeBuilder<Teacher> builder)
     {
-        builder.ToTable("Students");
+        builder.ToTable("Teachers");
         builder.HasKey(t => t.Id);
 
         builder.HasMany<Course>()
-            .WithMany();
-        
-        builder.HasMany<Teacher>()
             .WithMany();
     }
 }

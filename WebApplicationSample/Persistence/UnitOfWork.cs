@@ -1,4 +1,6 @@
-﻿using WebApplicationSample.Abstraction;
+﻿using System.Collections.Concurrent;
+using System.ComponentModel.DataAnnotations;
+using WebApplicationSample.Abstraction;
 
 namespace WebApplicationSample.Persistence;
 
@@ -6,40 +8,29 @@ public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _appDbContext;
     private readonly IServiceProvider _provider;
-    private readonly Dictionary<Type, object> _dictionary;
+    [ConcurrencyCheck] private readonly ConcurrentDictionary<Type, object> _dictionary;
     private readonly object _lock = new object();
 
     public UnitOfWork(AppDbContext appDbContext, IServiceProvider provider)
     {
         _appDbContext = appDbContext;
         _provider = provider;
-        _dictionary = new Dictionary<Type, object>();
+        _dictionary = new ConcurrentDictionary<Type, object>();
     }
 
-    public TRepository GetRepositoryOf<TRepository>()
+
+    public TRepository GetRepository<TRepository>()
         where TRepository : IRepositoryMarker
     {
-        lock (_lock)
-        {
-            var type = typeof(TRepository);
-
-            if (!_dictionary.TryGetValue(type, out var repo))
+        var type = typeof(TRepository);
+        if (_dictionary.GetOrAdd(type, (k) =>
             {
                 var types = GetType().Assembly.GetTypes();
                 var implementationType = types.Single(t => t.IsClass && t.IsAssignableTo(type));
-                repo = ActivatorUtilities.CreateInstance(_provider, implementationType, _appDbContext);
-                
-                if (repo is null)
-                {
-                    throw new InvalidOperationException(
-                        $"Cannot create repository from type {implementationType.FullName}");
-                }
+                return ActivatorUtilities.CreateInstance(_provider, implementationType, _appDbContext);
+            }) is TRepository repository) return repository;
 
-                _dictionary.Add(type, repo);
-            }
-
-            return (TRepository) repo;
-        }
+        throw new Exception();
     }
 
     public Task BeginTransactionAsync(CancellationToken cancellationToken = default)
@@ -60,5 +51,21 @@ public class UnitOfWork : IUnitOfWork
     public Task RollbackTransactionAsync(CancellationToken cancellationToken = default)
     {
         return _appDbContext.Database.RollbackTransactionAsync(cancellationToken);
+    }
+
+    public async Task TransactionAsync(TransactionDelegate action, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await BeginTransactionAsync(cancellationToken);
+            await action(cancellationToken);
+            await SaveChangesAsync(cancellationToken);
+            await CommitTransactionAsync(cancellationToken);
+        }
+        catch
+        {
+            await RollbackTransactionAsync(cancellationToken);
+            throw;
+        }
     }
 }

@@ -10,7 +10,7 @@ public interface IStudentRepository : IRepository<Student, int>
 
 public class StudentRepository : BaseRepository<Student, int>, IStudentRepository
 {
-    public StudentRepository(AppDbContext appDbContext) : base(appDbContext)
+    public StudentRepository(AppDbContext appDbContext, IConfiguration configuration) : base(appDbContext)
     {
     }
 }

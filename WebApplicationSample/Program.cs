@@ -16,9 +16,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     
 }, ServiceLifetime.Transient);
 
-
-builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

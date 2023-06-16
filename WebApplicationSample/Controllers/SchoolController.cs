@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using WebApplicationSample.Abstraction;
+using WebApplicationSample.Persistence;
 using WebApplicationSample.Persistence.Entities;
-using WebApplicationSample.Persistence.Repositories;
 
 namespace WebApplicationSample.Controllers;
 
@@ -9,49 +9,37 @@ namespace WebApplicationSample.Controllers;
 [Route("[controller]")]
 public class SchoolController : ControllerBase
 {
-    private readonly IUnitOfWork _unitOfWork;
-    private readonly IStudentRepository _studentRepository;
+    private readonly AppDbContext dbContext;
 
-    public SchoolController(IUnitOfWork unitOfWork)
+    public SchoolController(AppDbContext dbContext)
     {
-        _unitOfWork = unitOfWork;
-        _studentRepository = _unitOfWork.GetRepository<IStudentRepository>();
+        this.dbContext = dbContext;
     }
 
-    [HttpPost("CreateStudent")]
-    public async Task<IActionResult> CreateStudent([FromBody] Student student)
+    [HttpGet]
+    public async Task<IActionResult> CreateStudent([FromQuery] StudentQuery query)
     {
-        try
-        {
-            await _unitOfWork.BeginTransactionAsync();
-            await _studentRepository.InsertAsync(student);
-            await _unitOfWork.SaveChangesAsync();
-            await _unitOfWork.CommitTransactionAsync();
-            return Ok();
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync();
-            throw;
-        }
+        var res = await dbContext.Students
+            .ApplyFilter(query)
+            .ApplySort(query)
+            .ToPagedListAsync(query);
+
+        return Ok(res);
     }
 
-    [HttpPost("CreateStudent2")]
-    public async Task<IActionResult> CreateStudent2([FromBody] Student student, CancellationToken cancellationToken = default)
+    public abstract class FilterableQuery : IPagination, IFilterable, ISortable
     {
-        try
-        {
-            await _unitOfWork.CommitTransactionAsync(async (token) =>
-            {
-                await _studentRepository.InsertAsync(student, token);
-            }, cancellationToken);
+        public int PageIndex { get; set; }
+        public int PageSize { get; set; }
+        public string? FilterBy { get; set; }
+        public string? SortBy { get; set; }
+    }
 
-            return Ok();
-        }
-        catch
-        {
-            await _unitOfWork.RollbackTransactionAsync();
-            throw;
-        }
+    public class StudentQuery : FilterableQuery
+    {
+        public int? Id { get; set; }
+        public string? FirstName { get; set; }
+        public string? LastName { get; set; }
+        public DateTime? BirthDate { get; set; }
     }
 }
